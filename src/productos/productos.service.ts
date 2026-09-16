@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { CrearProductoDto } from './dto/crear-producto.dto';
+import { ActualizarPrecioDto } from './dto/actualizar-precio.dto';
 
 export interface Producto {
   id: number;
@@ -24,5 +26,28 @@ export class ProductosService {
       throw new NotFoundException(`Producto con id ${id} no encontrado`);
     }
     return producto;
+  }
+  crear(dto: CrearProductoDto): Producto {
+    const nuevoId = Math.max(...this.productos.map((p) => p.id)) + 1;
+    const nuevo: Producto = { id: nuevoId, ...dto };
+    this.productos.push(nuevo);
+    return nuevo;
+  }
+  reemplazar(id: number, dto: CrearProductoDto): void {
+    const index = this.productos.findIndex((p) => p.id === id);
+    if (index === -1) throw new NotFoundException(`Producto con id ${id} no encontrado`);
+    this.productos[index] = { id, ...dto };
+  }
+
+  actualizarPrecio(id: number, dto: ActualizarPrecioDto): Producto {
+    const index = this.productos.findIndex((p) => p.id === id);
+    if (index === -1) throw new NotFoundException(`Producto con id ${id} no encontrado`);
+    this.productos[index].precio = dto.precio;
+    return this.productos[index];
+  } 
+  eliminar(id: number): void {
+  const index = this.productos.findIndex((p) => p.id === id);
+  if (index === -1) throw new NotFoundException(`Producto con id ${id} no encontrado`);
+  this.productos.splice(index, 1);
   }
 }
