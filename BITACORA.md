@@ -107,3 +107,16 @@ La consecuencia práctica es la que se comprueba en el Paso 8: se crean varios p
 - v2 → v3-breaking (campo requerido sin default): `compatible: false`, y una petición v1 recibe 400 `missingProperty: "categoria"`.
 - El script solo evalúa BACKWARD (lo nuevo acepta lo viejo). No comprueba FORWARD ni FULL, ni detecta la reducción de un `enum` o un `maximum` más estricto.
 - Con `additionalProperties: false`, un cliente que ya envíe `categoria` es rechazado por v1 (400 `additionalProperties`).
+
+## Despliegue en la nube (Render + Neon)
+
+| # | Acción | Resultado |
+|---|---|---|
+| 1 | `GET https://apisemana2.onrender.com/api/v1/health` tras el push | Sin respuesta en 170 s; el deploy `e7a6f0d` terminó en `update_failed` |
+| 2 | Logs de Render (API REST) | `Error: getaddrinfo ENOTFOUND dpg-dapucdid0e5s73af3hog-a`: la Postgres gratis de Render ya no existe |
+| 3 | Neon (API REST): proyecto nuevo `apisemana2-p8` | `aws-us-west-2` (misma zona que Render Oregon), PostgreSQL 16, conexión directa con `sslmode=require`; no se tocó el proyecto existente |
+| 4 | Render (API REST), solo el servicio `apisemana2` | `DATABASE_URL` (Neon), `NODE_ENV=production`, Build `npm ci --include=dev && npm run build`, Start `npm run start:prod`, Health `/api/v1/health` |
+| 5 | Deploy `dep-dbscun3bc2fs73b7qd2g` (`e7a6f0d`) | `live` en 62 s; Render eligió Node 26.13.1 por `engines >=24`; la migración creó la tabla |
+| 6 | `.\scripts\verificar-contrato.ps1 -BaseUrl https://apisemana2.onrender.com` | **PASS 9/9** (`docs/evidencia-nube.txt`) |
+| 7 | Carga de los 3 productos por `POST` | ids 3, 4 y 5 (los ids 1 y 2 los usó y borró la verificación) |
+| 8 | `GET /api/v1/productos/2147483648` en Render | 400 (antes 500); sin `X-Powered-By`, con `nosniff` |

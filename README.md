@@ -15,6 +15,8 @@ API de productos construida con NestJS, persistida en PostgreSQL con TypeORM y d
 | Salud (API + base) | https://apisemana2.onrender.com/api/v1/health |
 | Swagger UI | https://apisemana2.onrender.com/api/docs |
 
+**Despliegue:** Render (Web Service Free, Oregon, Node según `engines`). Build `npm ci --include=dev && npm run build`, Start `npm run start:prod`, Health Check Path `/api/v1/health`, variables `DATABASE_URL` y `NODE_ENV=production`. Base de datos: proyecto **Neon** `apisemana2-p8` (aws-us-west-2, PostgreSQL 16, conexión directa con `sslmode=require`), que reemplaza a la Postgres gratis de Render, caducada: el deploy fallaba con `getaddrinfo ENOTFOUND dpg-...`. La tabla la crea la migración al arrancar. La URL de la base solo existe como variable en Render.
+
 > **Render gratis duerme el servicio tras 15 min sin tráfico.** Antes de una demo hay que abrir `/api/v1/health` y esperar hasta 1 minuto a que responda `{"status":"ok","baseDatos":"conectada"}`.
 
 ## Cómo ejecutar en local
