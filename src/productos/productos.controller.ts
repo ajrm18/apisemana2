@@ -19,7 +19,7 @@ import { ProductosService } from './productos.service';
 import { CrearProductoDto } from './dto/crear-producto.dto';
 import { ActualizarPrecioDto } from './dto/actualizar-precio.dto';
 import { JsonSchemaValidationPipe } from '../common/json-schema-validation.pipe';
-import producto from './schemas/producto.schema.json';
+import producto from './schemas/producto.schema.v2.json';
 
 @ApiTags('productos')
 @Controller('productos')

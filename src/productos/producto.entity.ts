@@ -17,4 +17,8 @@ export class Producto {
     },
   })
   precio: number;
+
+  // Esquema v2: campo opcional; nullable para que los registros previos sigan siendo validos.
+  @Column({ nullable: true })
+  categoria?: string;
 }

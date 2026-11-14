@@ -37,6 +37,7 @@ export class ProductosService {
     const nuevo = this.productosRepository.create({
       nombre: datos.nombre,
       precio: datos.precio,
+      categoria: datos.categoria,
     });
     return this.productosRepository.save(nuevo);
   }
