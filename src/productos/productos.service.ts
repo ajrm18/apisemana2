@@ -20,9 +20,10 @@ export class ProductosService {
   ) {}
 
   findAll(nombre?: string): Promise<Producto[]> {
-    if (!nombre) return this.productosRepository.find();
+    if (!nombre) return this.productosRepository.find({ order: { id: 'ASC' } });
     return this.productosRepository.find({
       where: { nombre: ILike(`%${nombre}%`) },
+      order: { id: 'ASC' },
     });
   }
 
@@ -44,7 +45,9 @@ export class ProductosService {
 
   async reemplazar(id: number, dto: CrearProductoDto): Promise<void> {
     const producto = await this.findOne(id);
-    await this.productosRepository.save({ ...producto, ...dto });
+    producto.nombre = dto.nombre;
+    producto.precio = dto.precio;
+    await this.productosRepository.save(producto);
   }
 
   async actualizarPrecio(id: number, dto: ActualizarPrecioDto): Promise<Producto> {

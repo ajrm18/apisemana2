@@ -1,12 +1,22 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { DataSource } from 'typeorm';
 
-@Controller()
+@ApiTags('salud')
+@Controller('health')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly dataSource: DataSource) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @ApiOperation({ summary: 'Estado de la API y de la conexion con PostgreSQL' })
+  @ApiResponse({ status: 200, description: 'API y base de datos disponibles.' })
+  @ApiResponse({ status: 503, description: 'La base de datos no responde.' })
+  async salud() {
+    try {
+      await this.dataSource.query('SELECT 1');
+    } catch {
+      throw new ServiceUnavailableException({ status: 'error', baseDatos: 'desconectada' });
+    }
+    return { status: 'ok', baseDatos: 'conectada' };
   }
 }
