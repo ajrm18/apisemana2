@@ -1,0 +1,102 @@
+=== Evidencia local - Practica 8 (Semana 7) - 2026-11-14 13:24 -0500 ===
+
+--- Correccion 1: ajv por defecto (draft-07) vs ajv/dist/2020 ---
+$ node -e "new (require(\"ajv\").default)({allErrors:true}).compile(require(\"./src/productos/schemas/producto.schema.json\"))"
+Error: no schema with key or ref "https://json-schema.org/draft/2020-12/schema"
+$ node -e "new (require(\"ajv/dist/2020\").default)({allErrors:true}).compile(...)"
+OK: esquema draft 2020-12 compilado
+
+--- Paso 4 (esquema v1) ---
+$ curl.exe -i -X POST http://localhost:3000/api/v1/productos -H 'Content-Type: application/json' -d '{"nombre":"Auriculares"}'
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Content-Length: 238
+
+{"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"","schemaPath":"#/required","keyword":"required","params":{"missingProperty":"precio"},"message":"must have required property 'precio'"}]}
+
+
+$ curl.exe -i -X POST http://localhost:3000/api/v1/productos -H 'Content-Type: application/json' -d '{"nombre":"Auriculares","precio":10,"stock":5}'
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Content-Length: 263
+
+{"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"","schemaPath":"#/additionalProperties","keyword":"additionalProperties","params":{"additionalProperty":"stock"},"message":"must NOT have additional properties"}]}
+
+
+$ curl.exe -i -X POST http://localhost:3000/api/v1/productos -H 'Content-Type: application/json' -d '{"nombre":"Auriculares","precio":10}'
+HTTP/1.1 201 Created
+Location: /api/v1/productos/5
+Content-Type: application/json; charset=utf-8
+Content-Length: 43
+
+{"id":5,"nombre":"Auriculares","precio":10}
+
+
+--- Paso 5 (esquema v2, controlador importa producto.schema.v2.json) ---
+$ curl.exe -i -X POST http://localhost:3000/api/v1/productos -H 'Content-Type: application/json' -d '{"nombre":"Auriculares","precio":10}'
+HTTP/1.1 201 Created
+Location: /api/v1/productos/6
+Content-Type: application/json; charset=utf-8
+Content-Length: 60
+
+{"id":6,"nombre":"Auriculares","precio":10,"categoria":null}
+
+
+$ curl.exe -i -X POST http://localhost:3000/api/v1/productos -H 'Content-Type: application/json' -d '{"nombre":"Laptop","precio":899.99,"categoria":"electronica"}'
+HTTP/1.1 201 Created
+Location: /api/v1/productos/7
+Content-Type: application/json; charset=utf-8
+Content-Length: 68
+
+{"id":7,"nombre":"Laptop","precio":899.99,"categoria":"electronica"}
+
+
+$ curl.exe -i -X POST http://localhost:3000/api/v1/productos -H 'Content-Type: application/json' -d '{"nombre":"Pelota","precio":5,"categoria":"juguetes"}'
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Content-Length: 290
+
+{"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"/categoria","schemaPath":"#/properties/categoria/enum","keyword":"enum","params":{"allowedValues":["electronica","oficina","hogar"]},"message":"must be equal to one of the allowed values"}]}
+
+
+
+--- Fase 9: .\scripts\verificar-contrato.ps1 (local) ---
+=== verificar-contrato.ps1 contra http://localhost:3000 - 2026-11-14 13:37:23 -05:00 ===
+Despertando el servicio (Render gratis puede tardar ~1 min en el arranque en frio)...
+[PASS] GET /api/v1/health
+       -> HTTP 200  {"status":"ok","baseDatos":"conectada"}
+[PASS] POST sin precio
+       -> HTTP 400 / required  {"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"","schemaPath":"#/required","keyword":"required","params":{"missingProperty":"precio"},"message":"must have required property 'precio'"}]}
+[PASS] POST con campo stock
+       -> HTTP 400 / additionalProperties  {"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"","schemaPath":"#/additionalProperties","keyword":"additionalProperties","params":{"additionalProperty":"stock"},"message":"must NOT have additional properties"}]}
+[PASS] POST con precio negativo
+       -> HTTP 400 / minimum  {"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"/precio","schemaPath":"#/properties/precio/minimum","keyword":"minimum","params":{"comparison":">=","limit":0},"message":"must be >= 0"}]}
+[PASS] POST con categoria invalida
+       -> HTTP 400 / enum  {"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"/categoria","schemaPath":"#/properties/categoria/enum","keyword":"enum","params":{"allowedValues":["electronica","oficina","hogar"]},"message":"must be equal to one of the allowed values"}]}
+[PASS] POST formato v1 (sin categoria)
+       -> HTTP 201 /api/v1/productos/14  {"id":14,"nombre":"Verificacion v1","precio":10,"categoria":null}
+[PASS] POST con categoria "electronica"
+       -> HTTP 201 /api/v1/productos/15  {"id":15,"nombre":"Verificacion v2","precio":899.99,"categoria":"electronica"}
+[PASS] check-compatibility v1 -> v2
+       -> HTTP compatible: true  
+[PASS] check-compatibility v2 -> v3-breaking
+       -> HTTP compatible: false  Campo requerido nuevo sin default: categoria
+Limpieza: borrados los productos de prueba 14, 15
+
+
+Resultado Caso                                  Esperado                   Obtenido                  
+--------- ----                                  --------                   --------                  
+PASS      GET /api/v1/health                    200                        200                       
+PASS      POST sin precio                       400 / required             400 / required            
+PASS      POST con campo stock                  400 / additionalProperties 400 / additionalProperties
+PASS      POST con precio negativo              400 / minimum              400 / minimum             
+PASS      POST con categoria invalida           400 / enum                 400 / enum                
+PASS      POST formato v1 (sin categoria)       201 + Location             201 /api/v1/productos/14  
+PASS      POST con categoria "electronica"      201 + Location             201 /api/v1/productos/15  
+PASS      check-compatibility v1 -> v2          compatible: true           compatible: true          
+PASS      check-compatibility v2 -> v3-breaking compatible: false          compatible: false         
+
+
+
+Resumen: PASS 9/9
+
