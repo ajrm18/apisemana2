@@ -1,0 +1,24 @@
+=== Script check-compatibility.js CORREGIDO - 2026-11-14 13:25 -0500 ===
+
+$ node check-compatibility.js src/productos/schemas/producto.schema.v2.json src/productos/schemas/producto.schema.v3-breaking.json
+{
+  "compatible": false,
+  "problemas": [
+    "Campo requerido nuevo sin default: categoria"
+  ]
+}
+
+$ node check-compatibility.js src/productos/schemas/producto.schema.json src/productos/schemas/producto.schema.v2.json
+{
+  "compatible": true,
+  "problemas": []
+}
+
+--- Efecto real del breaking change: servidor levantado TEMPORALMENTE con producto.schema.v3-breaking.json (cambio local no commiteado) ---
+$ curl.exe -i -X POST http://localhost:3000/api/v1/productos -H 'Content-Type: application/json' -d '{"nombre":"Auriculares","precio":10}'   (peticion formato v1)
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+Content-Length: 244
+
+{"mensaje":"El cuerpo de la peticion no cumple el contrato JSON Schema","errores":[{"instancePath":"","schemaPath":"#/required","keyword":"required","params":{"missingProperty":"categoria"},"message":"must have required property 'categoria'"}]}
+

@@ -1,0 +1,16 @@
+=== Script check-compatibility.js TAL CUAL viene en la guia (sin corregir) - 2026-11-14 13:25 -0500 ===
+
+$ node check-compatibility.js src/productos/schemas/producto.schema.json src/productos/schemas/producto.schema.v2.json
+{
+  "compatible": true,
+  "problemas": []
+}
+
+$ node check-compatibility.js src/productos/schemas/producto.schema.v2.json src/productos/schemas/producto.schema.v3-breaking.json
+{
+  "compatible": true,
+  "problemas": []
+}
+
+Resultado: v2 -> v3-breaking da compatible: true aunque v3 rompe a los clientes v1/v2 (categoria pasa a requerida sin default).
+Causa: la condicion !(campo in schemaViejo.properties) descarta 'categoria' porque ya existia como opcional en v2.
