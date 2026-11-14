@@ -5,6 +5,13 @@ import { Producto } from './producto.entity';
 import { CrearProductoDto } from './dto/crear-producto.dto';
 import { ActualizarPrecioDto } from './dto/actualizar-precio.dto';
 
+/** Forma del cuerpo de POST /productos ya validado por el JSON Schema. */
+export interface DatosNuevoProducto {
+  nombre: string;
+  precio: number;
+  categoria?: string;
+}
+
 @Injectable()
 export class ProductosService {
   constructor(
@@ -25,8 +32,12 @@ export class ProductosService {
     return producto;
   }
 
-  async crear(dto: CrearProductoDto): Promise<Producto> {
-    const nuevo = this.productosRepository.create(dto);
+  async crear(datos: DatosNuevoProducto): Promise<Producto> {
+    // Solo se copian los campos del contrato (el JSON Schema ya rechazo los extra).
+    const nuevo = this.productosRepository.create({
+      nombre: datos.nombre,
+      precio: datos.precio,
+    });
     return this.productosRepository.save(nuevo);
   }
 

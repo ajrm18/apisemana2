@@ -14,10 +14,12 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CrearProductoDto } from './dto/crear-producto.dto';
 import { ActualizarPrecioDto } from './dto/actualizar-precio.dto';
+import { JsonSchemaValidationPipe } from '../common/json-schema-validation.pipe';
+import producto from './schemas/producto.schema.json';
 
 @ApiTags('productos')
 @Controller('productos')
@@ -40,12 +42,15 @@ export class ProductosController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Crear un producto nuevo' })
+  @ApiOperation({ summary: 'Crear un producto nuevo (validado con JSON Schema)' })
+  @ApiBody({ schema: producto as object })
+  @ApiResponse({ status: 201, description: 'Producto creado; header Location con su URI.' })
+  @ApiResponse({ status: 400, description: 'El cuerpo no cumple el contrato JSON Schema.' })
   async crear(
-    @Body() dto: CrearProductoDto,
+    @Body(new JsonSchemaValidationPipe(producto)) body: any,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const nuevo = await this.productosService.crear(dto);
+    const nuevo = await this.productosService.crear(body);
     res.setHeader('Location', `/api/v1/productos/${nuevo.id}`);
     return nuevo;
   }
