@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { ProductosModule } from './productos/productos.module';
 import { ProductosCategoria1763150000000 } from './migrations/1763150000000-ProductosCategoria';
+import { CorrelationIdMiddleware } from './common/correlation-id.middleware';
 
 @Module({
   imports: [
@@ -36,4 +37,9 @@ import { ProductosCategoria1763150000000 } from './migrations/1763150000000-Prod
   ],
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  // Semana 8: log de trazabilidad en todas las rutas (incluye /api/v1/health).
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*path');
+  }
+}
